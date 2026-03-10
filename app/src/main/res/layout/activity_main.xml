@@ -17,7 +17,7 @@
             android:src="@drawable/group" />
 
         <ViewFlipper
-           android:id="@+id/view_flipper"
+            android:id="@+id/view_flipper"
             android:layout_width="match_parent"
             android:layout_height="wrap_content">
 
@@ -62,16 +62,20 @@
                     android:id="@+id/signin"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
+                    android:layout_marginTop="15dp"
+                    android:background="@drawable/button_bg"
                     android:text="@string/btn_SignIn"
                     android:textColor="@color/white"
                     android:textStyle="bold" />
-<TextView
-    android:layout_width="wrap_content"
-    android:layout_height="wrap_content"
-    android:layout_marginTop="15dp"
-    android:id="@+id/text_veiw_register"
-    android:background="?attr/selectableItemBackgroundBorderless"
-    android:textColor="@android:color/holo_blue_light"/>
+
+                <TextView
+                    android:id="@+id/text_veiw_register"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="15dp"
+                    android:background="?attr/selectableItemBackgroundBorderless"
+                    android:text="@string/text_veiw_register"
+                    android:textColor="@android:color/holo_blue_light" />
 
             </androidx.appcompat.widget.LinearLayoutCompat>
 
@@ -131,16 +135,20 @@
                     android:id="@+id/signup"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:text="@string/btn_SignIn"
+                    android:layout_marginTop="15dp"
+                    android:background="@drawable/button_bg"
+                    android:text="@string/btn_SignUp"
                     android:textColor="@color/white"
                     android:textStyle="bold" />
+
                 <TextView
+                    android:id="@+id/text_veiw_signin"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:layout_marginTop="15dp"
-                    android:id="@+id/text_veiw_signin"
                     android:background="?attr/selectableItemBackgroundBorderless"
-                    android:textColor="@android:color/holo_blue_light"/>
+                    android:text="@string/text_veiw_signin"
+                    android:textColor="@android:color/holo_blue_light" />
 
             </androidx.appcompat.widget.LinearLayoutCompat>
 

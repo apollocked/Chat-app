@@ -2,8 +2,10 @@
     <string name="app_name">ChatApp</string>
     <string name="hint_Email">Email</string>
     <string name="hint_Password">Password</string>
-    <string name="btn_SignIn">sign in</string>
-    <string name="btn_Register">Register</string>
+    <string name="btn_SignIn">Sign in</string>
+    <string name="btn_SignUp">Sign up</string>
+    <string name="text_veiw_register">Don\'t have an account? Register</string>
+    <string name="text_veiw_signin">Already have an account? Sign in</string>
     <string name="hint_ConfirmPassword">Confirm Password</string>
 
 </resources>
