@@ -1,0 +1,9 @@
+<resources>
+    <string name="app_name">ChatApp</string>
+    <string name="hint_Email">Email</string>
+    <string name="hint_Password">Password</string>
+    <string name="btn_SignIn">sign in</string>
+    <string name="btn_Register">Register</string>
+    <string name="hint_ConfirmPassword">Confirm Password</string>
+
+</resources>
