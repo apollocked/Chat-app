@@ -143,20 +143,41 @@
                     android:text="@string/btn_SignUp"
                     android:textColor="@color/white"
                     android:textStyle="bold" />
-
-                <TextView
-                    android:id="@+id/text_view_signin"
-                    android:layout_width="wrap_content"
+                <androidx.appcompat.widget.LinearLayoutCompat
+                    android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:layout_marginTop="15dp"
-                    android:background="?attr/selectableItemBackgroundBorderless"
-                    android:text="@string/text_veiw_signin"
-                    android:textColor="@android:color/holo_blue_light" />
+                    android:orientation="horizontal"
+                    android:gravity="center_horizontal">
+                    <TextView
+                        android:id="@+id/text_view_signin"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="15dp"
+                        android:background="?attr/selectableItemBackgroundBorderless"
+                        android:text="@string/text_veiw_signin"
+                        android:textColor="@android:color/holo_blue_light" />
+                    <TextView
+                        android:layout_marginStart="10dp"
+                        android:id="@+id/text_view_goto_orofile"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="15dp"
+                        android:background="?attr/selectableItemBackgroundBorderless"
+                        android:text="@string/choosePP"
+                        android:textColor="@android:color/holo_blue_light" />
+
+                </androidx.appcompat.widget.LinearLayoutCompat>
+
+
+
+
 
             </androidx.appcompat.widget.LinearLayoutCompat>
             <androidx.appcompat.widget.LinearLayoutCompat
                 android:layout_width="match_parent"
-                android:layout_height="wrap_content">
+                android:layout_height="wrap_content"
+                android:orientation="vertical"
+                android:gravity="center">
                 <com.mikhaellopez.circularimageview.CircularImageView
                     android:layout_width="150dp"
                     android:layout_height="150dp"
@@ -165,7 +186,19 @@
                     app:civ_border_width="4dp"
                     app:civ_shadow="true"
                     app:civ_shadow_radius="10dp"
-                    app:civ_shadow_color="#3f51b5"/>
+                    app:civ_shadow_color="#3f51b5"
+                    android:background="?attr/selectableItemBackgroundBorderless"
+                    android:clickable="true"
+                    android:focusable="true"/>
+
+                <TextView
+                    android:id="@+id/textViewSignup"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="15dp"
+                    android:background="?attr/selectableItemBackgroundBorderless"
+                    android:text="@string/text_veiw_signin"
+                    android:textColor="@android:color/holo_blue_light" />
             </androidx.appcompat.widget.LinearLayoutCompat>
 
         </ViewFlipper>

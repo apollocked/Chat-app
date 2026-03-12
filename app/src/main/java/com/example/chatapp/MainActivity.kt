@@ -26,15 +26,17 @@ class MainActivity : AppCompatActivity() {
         mBinding.signup.setOnClickListener { createAccount() }
 
         mBinding.textViewRegister.setOnClickListener {
-            mBinding.viewFlipper.setInAnimation(this, R.anim.slide_in_left)
-            mBinding.viewFlipper.setOutAnimation(this, R.anim.slide_out_right)
-            mBinding.viewFlipper.showNext()
+            showNextAnimation()
         }
 
         mBinding.textViewSignin.setOnClickListener {
-            mBinding.viewFlipper.setInAnimation(this, R.anim.slide_in_right)
-            mBinding.viewFlipper.setOutAnimation(this, R.anim.slide_out_left)
-            mBinding.viewFlipper.showPrevious()
+            showPreviousAnimation()
+        }
+        mBinding.textViewGotoOrofile.setOnClickListener {
+            showNextAnimation()
+        }
+        mBinding.textViewSignup.setOnClickListener {
+            showPreviousAnimation()
         }
     }
 
@@ -50,7 +52,11 @@ class MainActivity : AppCompatActivity() {
                 if (task.isSuccessful) {
                     Toast.makeText(this, "Sign in successful", Toast.LENGTH_LONG).show()
                 } else {
-                    Toast.makeText(this, "Could not sign in\n${task.exception?.message}", Toast.LENGTH_LONG).show()
+                    Toast.makeText(
+                        this,
+                        "Could not sign in\n${task.exception?.message}",
+                        Toast.LENGTH_LONG
+                    ).show()
                 }
             }
     }
@@ -59,12 +65,12 @@ class MainActivity : AppCompatActivity() {
         val email = mBinding.signupInputEmail.editText?.text.toString().trim()
         val password = mBinding.signupInputPassword.editText?.text.toString().trim()
         val confirmPassword = mBinding.signupInputConfirmPassword.editText?.text.toString().trim()
-        
+
         if (email.isEmpty() || password.isEmpty() || confirmPassword.isEmpty()) {
             Toast.makeText(this, "Please enter email and password", Toast.LENGTH_LONG).show()
             return
         }
-        
+
         if (password != confirmPassword) {
             Toast.makeText(this, "Passwords do not match", Toast.LENGTH_LONG).show()
             return
@@ -80,7 +86,22 @@ class MainActivity : AppCompatActivity() {
                         rootView,
                         task.exception?.message ?: "Authentication Failed",
                         com.google.android.material.snackbar.Snackbar.LENGTH_INDEFINITE
-                    ).show()                }
+                    ).show()
+                }
             }
     }
+
+    private fun showNextAnimation() {
+        mBinding.viewFlipper.setInAnimation(this, R.anim.slide_in_left)
+        mBinding.viewFlipper.setOutAnimation(this, R.anim.slide_out_right)
+        mBinding.viewFlipper.showNext()
+    }
+
+    private fun showPreviousAnimation() {
+        mBinding.viewFlipper.setInAnimation(this, R.anim.slide_in_right)
+        mBinding.viewFlipper.setOutAnimation(this, R.anim.slide_out_left)
+        mBinding.viewFlipper.showPrevious()
+    }
+
+
 }
