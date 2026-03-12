@@ -22,12 +22,11 @@ class MainActivity : AppCompatActivity() {
 
         mBinding.signin.setOnClickListener { signIn() }
 
-        mBinding.signup.setOnClickListener { creatAccount() }
+        mBinding.signup.setOnClickListener { createAccount() }
 
         mBinding.textViewRegister.setOnClickListener {
-            // FIXED TYPO: slide_out_right
             mBinding.viewFlipper.setInAnimation(this, R.anim.slide_in_left)
-            mBinding.viewFlipper.setOutAnimation(this, R.anim.slide_out_righ)
+            mBinding.viewFlipper.setOutAnimation(this, R.anim.slide_out_right)
             mBinding.viewFlipper.showNext()
         }
 
@@ -39,7 +38,6 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun signIn() {
-
         val email = mBinding.signinInputEmail.editText?.text.toString().trim()
         val password = mBinding.signinInputPassword.editText?.text.toString().trim()
         if (email.isEmpty() || password.isEmpty()) {
@@ -48,18 +46,36 @@ class MainActivity : AppCompatActivity() {
         }
         FirebaseAuth.getInstance().signInWithEmailAndPassword(email, password)
             .addOnCompleteListener { task ->
-            if (task.isSuccessful) {
-            Toast.makeText(this, "Sign in successful", Toast.LENGTH_LONG).show()
-            } else {
-            Toast.makeText(this, "Could not sign in\n${task.exception?.message}", Toast.LENGTH_LONG).show()
-            }
+                if (task.isSuccessful) {
+                    Toast.makeText(this, "Sign in successful", Toast.LENGTH_LONG).show()
+                } else {
+                    Toast.makeText(this, "Could not sign in\n${task.exception?.message}", Toast.LENGTH_LONG).show()
+                }
             }
     }
-    private fun creatAccount() {
+
+    private fun createAccount() {
         val email = mBinding.signupInputEmail.editText?.text.toString().trim()
         val password = mBinding.signupInputPassword.editText?.text.toString().trim()
+        val confirmPassword = mBinding.signupInputConfirmPassword.editText?.text.toString().trim()
+        
+        if (email.isEmpty() || password.isEmpty() || confirmPassword.isEmpty()) {
+            Toast.makeText(this, "Please enter email and password", Toast.LENGTH_LONG).show()
+            return
+        }
+        
+        if (password != confirmPassword) {
+            Toast.makeText(this, "Passwords do not match", Toast.LENGTH_LONG).show()
+            return
+        }
 
+        FirebaseAuth.getInstance().createUserWithEmailAndPassword(email, password)
+            .addOnCompleteListener { task ->
+                if (task.isSuccessful) {
+                    Toast.makeText(this, "Account created successfully", Toast.LENGTH_LONG).show()
+                } else {
+                    Toast.makeText(this, "Could not create account\n${task.exception?.message}", Toast.LENGTH_LONG).show()
+                }
+            }
     }
-
-
 }
