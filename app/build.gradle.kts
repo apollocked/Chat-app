@@ -42,6 +42,7 @@ android {
 }
 
 dependencies {
+    implementation("com.mikhaellopez:circularimageview:4.3.1")
     implementation(libs.androidx.core.ktx)
     implementation(libs.androidx.appcompat)
     implementation(libs.material)
