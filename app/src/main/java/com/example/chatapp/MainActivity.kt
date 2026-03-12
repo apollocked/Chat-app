@@ -1,6 +1,7 @@
 package com.example.chatapp
 
 import android.os.Bundle
+import android.view.View
 import android.widget.Toast
 import androidx.activity.enableEdgeToEdge
 import androidx.appcompat.app.AppCompatActivity
@@ -74,8 +75,12 @@ class MainActivity : AppCompatActivity() {
                 if (task.isSuccessful) {
                     Toast.makeText(this, "Account created successfully", Toast.LENGTH_LONG).show()
                 } else {
-                    Toast.makeText(this, "Could not create account\n${task.exception?.message}", Toast.LENGTH_LONG).show()
-                }
+                    val rootView = findViewById<View>(android.R.id.content)
+                    com.google.android.material.snackbar.Snackbar.make(
+                        rootView,
+                        task.exception?.message ?: "Authentication Failed",
+                        com.google.android.material.snackbar.Snackbar.LENGTH_INDEFINITE
+                    ).show()                }
             }
     }
 }
