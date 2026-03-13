@@ -4,8 +4,11 @@ import com.google.firebase.Timestamp
 import com.google.firebase.firestore.ServerTimestamp
 
 data class ChatMessage(
-    val user: User? = null,
-    val messageText: String = "",
+    val user: User,
+    val messageText: String ,
     @ServerTimestamp
-    val timestamp: Timestamp? = null
-)
+    val timestamp: Timestamp?
+){
+    constructor():this(User(),"",null)
+
+}

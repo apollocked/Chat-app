@@ -99,10 +99,6 @@ class MainActivity : AppCompatActivity() {
                     // Convert image and Save to Firestore
                     val base64Image = encodeImageToBase64(imageUri)
                     saveUserToFirestore(uid, username, email, base64Image)
-                    mBinding.progressBar2.visibility = View.GONE
-                    mBinding.signup.isEnabled = true
-                    Toast.makeText(this, "Success!", Toast.LENGTH_SHORT).show()
-                    showPreviousAnimation()
                 } else {
                     mBinding.signup.isEnabled = true
                     Toast.makeText(
@@ -149,9 +145,14 @@ class MainActivity : AppCompatActivity() {
 
         db.collection("users").document(uid).set(user)
             .addOnSuccessListener {
-                Toast.makeText(this, "Success!", Toast.LENGTH_SHORT).show()
                 mBinding.progressBar2.visibility = View.GONE
-                sendUserToNextActivity()
+                mBinding.signup.isEnabled = true
+                
+                // Sign out so they can log in manually
+                auth.signOut()
+                
+                Toast.makeText(this, "Account Created! Please Sign In", Toast.LENGTH_SHORT).show()
+                showPreviousAnimation() // Navigate back to Sign In layout
             }
             .addOnFailureListener { e ->
                 mBinding.progressBar2.visibility = View.GONE

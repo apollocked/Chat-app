@@ -56,17 +56,18 @@ class ChatActivity : AppCompatActivity() {
     override fun onStart() {
         super.onStart()
         // Added orderBy to keep chat in chronological order
-        messagesRef.orderBy("timestamp").addSnapshotListener { value, error ->
+        messagesRef.orderBy("timestamp", com.google.firebase.firestore.Query.Direction.ASCENDING)
+            .addSnapshotListener { value, error ->
             if (error != null) return@addSnapshotListener
 
             value?.let {
-                for (docchange in it.documentChanges) {
-                    if (docchange.type == DocumentChange.Type.ADDED) {
-                        val chatMessage = docchange.document.toObject(ChatMessage::class.java)
+                for (documentChange in it.documentChanges) {
+                    if (documentChange.type == DocumentChange.Type.ADDED) {
+                        val chatMessage = documentChange.document.toObject(ChatMessage::class.java)
                         messageList.add(chatMessage)
                         messageAdapter.notifyItemInserted(messageList.size - 1)
                         // Auto-scroll to bottom
-                        messageRecyclerView.scrollToPosition(messageList.size - 1)
+                        messageRecyclerView.smoothScrollToPosition(messageList.size - 1)
                     }
                 }
             }
@@ -108,7 +109,7 @@ class ChatActivity : AppCompatActivity() {
                 // Disable button to prevent double clicks
                 sendButton.isEnabled = false
                 
-                val chatMessage = ChatMessage(currentUser, text)
+                val chatMessage = ChatMessage(currentUser, text, null)
                 messagesRef.document().set(chatMessage)
                     .addOnSuccessListener {
                         messageEditText.setText("")
