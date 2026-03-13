@@ -1,119 +1,141 @@
 package com.example.chatapp
 
 import android.content.Intent
-import android.content.pm.PackageManager
+import android.graphics.Bitmap
+import android.graphics.BitmapFactory
+import android.net.Uri
 import android.os.Bundle
-import android.view.View
+import android.util.Base64
+import android.util.Log
 import android.widget.Toast
 import androidx.activity.enableEdgeToEdge
 import androidx.activity.result.ActivityResultLauncher
+import androidx.activity.result.PickVisualMediaRequest
 import androidx.activity.result.contract.ActivityResultContracts
-import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
-import androidx.core.app.ActivityCompat
 import androidx.databinding.DataBindingUtil
 import com.example.chatapp.databinding.ActivityMainBinding
+import com.example.chatapp.model.User
+import com.example.chatapp.ui.ChatActivity
 import com.google.firebase.auth.FirebaseAuth
+import com.google.firebase.firestore.FirebaseFirestore
+import java.io.ByteArrayOutputStream
 
 class MainActivity : AppCompatActivity() {
     private lateinit var mBinding: ActivityMainBinding
-    private lateinit var getResult: ActivityResultLauncher<Intent>
-    private val STORAGE_REQUEST_CODE = 415541
+    private lateinit var pickImageLauncher: ActivityResultLauncher<PickVisualMediaRequest>
+    private var imageUri: Uri? = null
 
+    private val auth = FirebaseAuth.getInstance()
+    private val db = FirebaseFirestore.getInstance()
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-
-        // 1. Initialize Binding First
         mBinding = DataBindingUtil.setContentView(this, R.layout.activity_main)
-
-        // 2. Then enable edge-to-edge
         enableEdgeToEdge()
+
+        // 1. Photo Picker Setup
+        pickImageLauncher = registerForActivityResult(ActivityResultContracts.PickVisualMedia()) { uri ->
+            if (uri != null) {
+                imageUri = uri
+                mBinding.profileImage.setImageURI(uri)
+                Log.d("DEBUG_APP", "Image Selected: $uri")
+            }
+        }
+
+        // 2. Profile Image Click
+        mBinding.profileImage.setOnClickListener {
+            pickImageLauncher.launch(PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly))
+        }
+
+        // 3. Auth Click Listeners
+        mBinding.signup.setOnClickListener {
+            Log.d("DEBUG_APP", "Signup button clicked")
+            createAccount()
+        }
 
         mBinding.signIn.setOnClickListener { signIn() }
 
-        mBinding.signup.setOnClickListener { createAccount() }
+        // 4. ViewFlipper Navigation (Animations)
+        mBinding.textViewRegister.setOnClickListener { showNextAnimation() }
+        mBinding.textViewGotoProfile.setOnClickListener { showNextAnimation() }
 
-        mBinding.textViewRegister.setOnClickListener {
-            showNextAnimation()
-        }
-
-        mBinding.textViewSignIn.setOnClickListener {
-            showPreviousAnimation()
-        }
-        mBinding.textViewGotoProfile.setOnClickListener {
-            showNextAnimation()
-        }
-        mBinding.textViewSignup.setOnClickListener {
-            showPreviousAnimation()
-        }
-        mBinding.profileImage.setOnClickListener {
-            if (ActivityCompat.checkSelfPermission(this@MainActivity,android.Manifest.permission.READ_EXTERNAL_STORAGE)
-                != PackageManager.PERMISSION_GRANTED){
-                requestPermissions()}else{
-              uploadImage()
-            }
-
-        }
-        getResult = registerForActivityResult(
-            ActivityResultContracts.StartActivityForResult()
-        ) {if (it.resultCode == RESULT_OK) {
-
-        mBinding.profileImage.setImageURI(it.data?.data)
-        }
-
-        }
-    }
-
-    private fun signIn() {
-        val email = mBinding.signInInputEmail.editText?.text.toString().trim()
-        val password = mBinding.signInInputPassword.editText?.text.toString().trim()
-        if (email.isEmpty() || password.isEmpty()) {
-            Toast.makeText(this, "Please enter email and password", Toast.LENGTH_LONG).show()
-            return
-        }
-        FirebaseAuth.getInstance().signInWithEmailAndPassword(email, password)
-            .addOnCompleteListener { task ->
-                if (task.isSuccessful) {
-                    Toast.makeText(this, "Sign in successful", Toast.LENGTH_LONG).show()
-                } else {
-                    Toast.makeText(
-                        this,
-                        "Could not sign in\n${task.exception?.message}",
-                        Toast.LENGTH_LONG
-                    ).show()
-                }
-            }
+        mBinding.textViewSignIn.setOnClickListener { showPreviousAnimation() }
+        mBinding.textViewSignup.setOnClickListener { showPreviousAnimation() }
     }
 
     private fun createAccount() {
         val email = mBinding.signupInputEmail.editText?.text.toString().trim()
         val password = mBinding.signupInputPassword.editText?.text.toString().trim()
-        val confirmPassword = mBinding.signupInputConfirmPassword.editText?.text.toString().trim()
+        val username = mBinding.signupInputUsername.editText?.text.toString().trim()
 
-        if (email.isEmpty() || password.isEmpty() || confirmPassword.isEmpty()) {
-            Toast.makeText(this, "Please enter email and password", Toast.LENGTH_LONG).show()
+        if (email.isEmpty() || password.isEmpty() || username.isEmpty()) {
+            Toast.makeText(this, "All fields are required", Toast.LENGTH_SHORT).show()
             return
         }
 
-        if (password != confirmPassword) {
-            Toast.makeText(this, "Passwords do not match", Toast.LENGTH_LONG).show()
-            return
-        }
+        // Disable button to prevent double clicks
+        mBinding.signup.isEnabled = false
 
-        FirebaseAuth.getInstance().createUserWithEmailAndPassword(email, password)
+        auth.createUserWithEmailAndPassword(email, password)
             .addOnCompleteListener { task ->
                 if (task.isSuccessful) {
-                    Toast.makeText(this, "Account created successfully", Toast.LENGTH_LONG).show()
+                    val uid = auth.currentUser?.uid ?: ""
+                    Log.d("DEBUG_APP", "Auth success: $uid")
+
+                    // Convert image and Save to Firestore
+                    val base64Image = encodeImageToBase64(imageUri)
+                    saveUserToFirestore(uid, username, base64Image)
                 } else {
-                    val rootView = findViewById<View>(android.R.id.content)
-                    com.google.android.material.snackbar.Snackbar.make(
-                        rootView,
-                        task.exception?.message ?: "Authentication Failed",
-                        com.google.android.material.snackbar.Snackbar.LENGTH_INDEFINITE
-                    ).show()
+                    mBinding.signup.isEnabled = true
+                    Log.e("DEBUG_APP", "Auth Failed", task.exception)
+                    Toast.makeText(this, "Auth Failed: ${task.exception?.message}", Toast.LENGTH_LONG).show()
                 }
             }
+    }
+
+    private fun encodeImageToBase64(uri: Uri?): String {
+        if (uri == null) return ""
+        return try {
+            val inputStream = contentResolver.openInputStream(uri)
+            val bitmap = BitmapFactory.decodeStream(inputStream)
+
+            // Resize to 150x150 to keep the string small for Firestore
+            val scaledBitmap = Bitmap.createScaledBitmap(bitmap, 150, 150, false)
+            val outputStream = ByteArrayOutputStream()
+            scaledBitmap.compress(Bitmap.CompressFormat.JPEG, 60, outputStream)
+
+            Base64.encodeToString(outputStream.toByteArray(), Base64.DEFAULT)
+        } catch (e: Exception) {
+            Log.e("DEBUG_APP", "Image Encoding Error", e)
+            ""
+        }
+    }
+
+    private fun saveUserToFirestore(uid: String, username: String, base64Image: String) {
+        val user = User(username, base64Image, uid)
+
+        db.collection("users").document(uid).set(user)
+            .addOnSuccessListener {
+                Toast.makeText(this, "Success!", Toast.LENGTH_SHORT).show()
+                sendUserToNextActivity()
+            }
+            .addOnFailureListener { e ->
+                mBinding.signup.isEnabled = true
+                Log.e("DEBUG_APP", "Firestore Error", e)
+                Toast.makeText(this, "Database Error: ${e.message}", Toast.LENGTH_LONG).show()
+            }
+    }
+
+    private fun signIn() {
+        val email = mBinding.signInInputEmail.editText?.text.toString().trim()
+        val password = mBinding.signInInputPassword.editText?.text.toString().trim()
+
+        if (email.isEmpty() || password.isEmpty()) return
+
+        auth.signInWithEmailAndPassword(email, password).addOnCompleteListener { task ->
+            if (task.isSuccessful) sendUserToNextActivity()
+        }
     }
 
     private fun showNextAnimation() {
@@ -127,47 +149,9 @@ class MainActivity : AppCompatActivity() {
         mBinding.viewFlipper.setOutAnimation(this, R.anim.slide_out_left)
         mBinding.viewFlipper.showPrevious()
     }
-private fun getImage() {
-val intent = Intent(Intent.ACTION_PICK)
-    intent.type = "image/*"
-    getResult.launch(intent)
-}
-private fun requestPermissions() {
-if (ActivityCompat.shouldShowRequestPermissionRationale(
-        this,android.Manifest.permission.READ_EXTERNAL_STORAGE)){
-AlertDialog.Builder(this@MainActivity)
-    .setPositiveButton("yes"){_,_->
-        ActivityCompat.requestPermissions(this, arrayOf(
-            android.Manifest.permission.READ_EXTERNAL_STORAGE),STORAGE_REQUEST_CODE
-        )}.setNegativeButton("no") { dialog, _ ->
 
-            dialog.dismiss()
-    }.setTitle("Permission is required")
-    .setMessage("Permission is required to select image")
-    .create().show()
-
-    }else{
-        ActivityCompat.requestPermissions(this, arrayOf(
-            android.Manifest.permission.READ_EXTERNAL_STORAGE),STORAGE_REQUEST_CODE)
+    private fun sendUserToNextActivity() {
+        startActivity(Intent(this, ChatActivity::class.java))
+        finish()
     }
-}
-private fun uploadImage() {
-
-}
-    override fun onRequestPermissionsResult(
-        requestCode: Int,
-        permissions: Array<out String>,
-        grantResults: IntArray
-        ) {
-        super.onRequestPermissionsResult(requestCode, permissions, grantResults)
-        if (requestCode == STORAGE_REQUEST_CODE) {
-            if (grantResults.isNotEmpty() && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
-                getImage()
-            } else {
-                Toast.makeText(this@MainActivity, "Permission denied",
-                    Toast.LENGTH_LONG).show()
-            }
-        }
-    }
-
 }
