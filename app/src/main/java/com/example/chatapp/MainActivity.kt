@@ -101,6 +101,8 @@ class MainActivity : AppCompatActivity() {
                     saveUserToFirestore(uid, username, email, base64Image)
                     mBinding.progressBar2.visibility = View.GONE
                     mBinding.signup.isEnabled = true
+                    Toast.makeText(this, "Success!", Toast.LENGTH_SHORT).show()
+                    showPreviousAnimation()
                 } else {
                     mBinding.signup.isEnabled = true
                     Toast.makeText(
