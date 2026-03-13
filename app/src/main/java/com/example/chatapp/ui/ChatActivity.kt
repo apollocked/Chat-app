@@ -105,13 +105,20 @@ class ChatActivity : AppCompatActivity() {
         val text = messageEditText.text.toString().trim()
         if (text.isNotEmpty()) {
             if (::currentUser.isInitialized) {
+                // Disable button to prevent double clicks
+                sendButton.isEnabled = false
+                
                 val chatMessage = ChatMessage(currentUser, text)
                 messagesRef.document().set(chatMessage)
                     .addOnSuccessListener {
                         messageEditText.setText("")
+                        // Re-enable button after success
+                        sendButton.isEnabled = true
                     }
                     .addOnFailureListener {
                         Toast.makeText(this, "Failed to send: ${it.message}", Toast.LENGTH_SHORT).show()
+                        // Re-enable button after failure
+                        sendButton.isEnabled = true
                     }
             } else {
                 Toast.makeText(this, "Still loading user data...", Toast.LENGTH_SHORT).show()
