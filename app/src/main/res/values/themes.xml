@@ -2,16 +2,18 @@
     <!-- Base application theme. -->
     <style name="Base.Theme.ChatApp" parent="Theme.Material3.DayNight.NoActionBar">
         <!-- Customize your light theme here. -->
-        <!-- <item name="colorPrimary">@color/my_light_primary</item> -->
+        <item name="colorPrimary">@color/darkBlue</item>
+        <item name="colorOnPrimary">@color/white</item>
         <item name="android:statusBarColor">@color/white</item>
     </style>
 
     <style name="Theme.ChatApp" parent="Base.Theme.ChatApp" />
 
-    <style name="myTheme"
-        parent="Base.Theme.ChatApp">
-        <item name="windowActionBar">true</item>
-        <item name="windowNoTitle"> false</item>
-        <item name="android:statusBarColor"> ?attr/colorPrimaryVariant</item>
+    <style name="myTheme" parent="Theme.MaterialComponents.DayNight.DarkActionBar">
+        <item name="colorPrimary">@color/darkBlue</item>
+        <item name="colorPrimaryVariant">@color/darkBlue</item>
+        <item name="colorOnPrimary">@color/white</item>
+        <!-- Status bar color -->
+        <item name="android:statusBarColor">@color/darkBlue</item>
     </style>
 </resources>

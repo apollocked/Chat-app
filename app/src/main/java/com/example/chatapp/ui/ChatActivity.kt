@@ -1,6 +1,9 @@
 package com.example.chatapp.ui
 
+import android.content.Intent
 import android.os.Bundle
+import android.view.Menu
+import android.view.MenuItem
 import android.widget.Button
 import android.widget.EditText
 import android.widget.Toast
@@ -10,6 +13,7 @@ import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
+import com.example.chatapp.MainActivity
 import com.example.chatapp.R
 import com.example.chatapp.adaptors.MessageAdapter
 import com.example.chatapp.model.ChatMessage
@@ -116,4 +120,26 @@ class ChatActivity : AppCompatActivity() {
             }
         }
     }
-}
+
+    override fun onCreateOptionsMenu(menu: Menu?): Boolean {
+        menuInflater.inflate(R.menu.chat_menu, menu)
+
+        return true
+    }
+
+    override fun onOptionsItemSelected(item: MenuItem): Boolean {
+        when (item.itemId) {
+
+            R.id.item_sign_out -> {
+                FirebaseAuth.getInstance().signOut()
+                Intent(this@ChatActivity, MainActivity::class.java).also {
+                    startActivity(it)
+                }
+                finish()
+                return true
+            }
+        }
+        return super.onOptionsItemSelected(item)
+    }
+
+    }
