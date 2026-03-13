@@ -8,18 +8,32 @@ import android.view.View
 import android.view.ViewGroup
 import android.widget.ImageView
 import android.widget.TextView
+import androidx.appcompat.app.AlertDialog
 import androidx.recyclerview.widget.RecyclerView
 import com.example.chatapp.R
 import com.example.chatapp.model.ChatMessage
+import com.example.chatapp.model.User
 import com.google.firebase.auth.FirebaseAuth
 import java.text.SimpleDateFormat
 import java.util.Locale
 
-class MessageAdapter(private val context: Context, private val messageList: List<ChatMessage>) :
-    RecyclerView.Adapter<MessageAdapter.MessageViewHolder>() {
+class MessageAdapter(
+    private val context: Context,
+    private val messageList: List<ChatMessage>,
+    private val messageIds: List<String>,
+    private var userMap: Map<String, User>,
+    private val onProfileClick: (User) -> Unit,
+    private val onOwnProfileClick: () -> Unit,
+    private val onDeleteClick: (String) -> Unit
+) : RecyclerView.Adapter<MessageAdapter.MessageViewHolder>() {
 
     private val VIEW_TYPE_SENT = 1
     private val VIEW_TYPE_RECEIVED = 2
+
+    fun updateUsers(newMap: Map<String, User>) {
+        userMap = newMap
+        notifyDataSetChanged()
+    }
 
     override fun getItemViewType(position: Int): Int {
         val message = messageList[position]
@@ -42,11 +56,13 @@ class MessageAdapter(private val context: Context, private val messageList: List
 
     override fun onBindViewHolder(holder: MessageViewHolder, position: Int) {
         val chatMessage = messageList[position]
-        val user = chatMessage.user
+        val messageId = messageIds[position]
+        
+        val uid = chatMessage.user?.uid ?: ""
+        val latestUser = userMap[uid] ?: chatMessage.user
 
-        holder.nameTv.text = user?.name ?: "Unknown"
+        holder.nameTv.text = latestUser?.name ?: "Unknown"
 
-        // Handle Message Text
         if (chatMessage.messageText.isNotEmpty()) {
             holder.messageTv.visibility = View.VISIBLE
             holder.messageTv.text = chatMessage.messageText
@@ -54,13 +70,11 @@ class MessageAdapter(private val context: Context, private val messageList: List
             holder.messageTv.visibility = View.GONE
         }
 
-        // Handle Message Image (Base64) or Placeholder
         if (!chatMessage.messageImage.isNullOrEmpty()) {
             holder.messageIv.visibility = View.VISIBLE
             if (chatMessage.messageImage == "PENDING") {
-                // Show placeholder image while uploading
                 holder.messageIv.setImageResource(R.drawable.group)
-                holder.messageIv.alpha = 0.5f // Make it look like it's loading
+                holder.messageIv.alpha = 0.5f
             } else {
                 holder.messageIv.alpha = 1.0f
                 try {
@@ -75,14 +89,12 @@ class MessageAdapter(private val context: Context, private val messageList: List
             holder.messageIv.visibility = View.GONE
         }
 
-        // Format and show time
         chatMessage.timestamp?.let {
             val sdf = SimpleDateFormat("HH:mm", Locale.getDefault())
             holder.timeTv.text = sdf.format(it.toDate())
         }
 
-        // Profile Image
-        val base64Image = user?.profileImage ?: ""
+        val base64Image = latestUser?.profileImage ?: ""
         if (base64Image.isNotEmpty()) {
             try {
                 val imageBytes = Base64.decode(base64Image, Base64.DEFAULT)
@@ -94,6 +106,33 @@ class MessageAdapter(private val context: Context, private val messageList: List
         } else {
             holder.profileIv.setImageResource(R.drawable.profile)
         }
+
+        // Tap on profile image
+        holder.profileIv.setOnClickListener {
+            if (getItemViewType(position) == VIEW_TYPE_SENT) {
+                onOwnProfileClick()
+            } else {
+                latestUser?.let { onProfileClick(it) }
+            }
+        }
+
+        if (getItemViewType(position) == VIEW_TYPE_SENT) {
+            holder.itemView.setOnLongClickListener {
+                showDeleteDialog(messageId)
+                true
+            }
+        }
+    }
+
+    private fun showDeleteDialog(messageId: String) {
+        AlertDialog.Builder(context)
+            .setTitle("Unsend Message")
+            .setMessage("Are you sure you want to Unsend this message?")
+            .setPositiveButton("Unsend") { _, _ ->
+                onDeleteClick(messageId)
+            }
+            .setNegativeButton("Cancel", null)
+            .show()
     }
 
     override fun getItemCount(): Int = messageList.size

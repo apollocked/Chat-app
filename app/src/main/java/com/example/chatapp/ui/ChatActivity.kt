@@ -19,6 +19,7 @@ import androidx.activity.enableEdgeToEdge
 import androidx.activity.result.ActivityResultLauncher
 import androidx.activity.result.PickVisualMediaRequest
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
@@ -48,14 +49,17 @@ class ChatActivity : AppCompatActivity() {
     private lateinit var messageRecyclerView: RecyclerView
     private lateinit var uploadingLayout: View
     private lateinit var uploadingImageView: ImageView
+    private lateinit var sendingProgressBar: ProgressBar
 
     private lateinit var messageAdapter: MessageAdapter
     private lateinit var messageList: MutableList<ChatMessage>
     private lateinit var messageIds: MutableList<String>
+    private val userMap = mutableMapOf<String, User>()
     private lateinit var currentUser: User
     
     private lateinit var pickImageLauncher: ActivityResultLauncher<PickVisualMediaRequest>
-    private var registration: ListenerRegistration? = null
+    private var messagesRegistration: ListenerRegistration? = null
+    private var usersRegistration: ListenerRegistration? = null
 
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -73,9 +77,11 @@ class ChatActivity : AppCompatActivity() {
         messageEditText = findViewById(R.id.messageEditText)
         uploadingLayout = findViewById(R.id.uploadingLayout)
         uploadingImageView = findViewById(R.id.uploadingImageView)
+        sendingProgressBar = findViewById(R.id.sendingProgressBar)
 
         initRecyclerView()
         getCurrentUser()
+        listenToUsers()
         
         sendButton.setOnClickListener {
             insertMessage()
@@ -96,12 +102,12 @@ class ChatActivity : AppCompatActivity() {
     override fun onStart() {
         super.onStart()
         
-        registration?.remove()
+        messagesRegistration?.remove()
         messageList.clear()
         messageIds.clear()
         messageAdapter.notifyDataSetChanged()
 
-        registration = messagesRef.orderBy("timestamp", Query.Direction.ASCENDING)
+        messagesRegistration = messagesRef.orderBy("timestamp", Query.Direction.ASCENDING)
             .addSnapshotListener { value, error ->
             if (error != null) return@addSnapshotListener
 
@@ -142,18 +148,81 @@ class ChatActivity : AppCompatActivity() {
 
     override fun onStop() {
         super.onStop()
-        registration?.remove()
-        registration = null
+        messagesRegistration?.remove()
+        messagesRegistration = null
+        usersRegistration?.remove()
+        usersRegistration = null
     }
 
     private fun initRecyclerView() {
         messageRecyclerView = findViewById(R.id.messageRecyclerView)
         messageList = mutableListOf()
         messageIds = mutableListOf()
-        messageAdapter = MessageAdapter(this, messageList)
+        messageAdapter = MessageAdapter(
+            this, 
+            messageList, 
+            messageIds, 
+            userMap,
+            onProfileClick = { user ->
+                val intent = Intent(this, ProfileActivity::class.java)
+                intent.putExtra("uid", user.uid)
+                intent.putExtra("name", user.name)
+                intent.putExtra("email", user.email)
+                intent.putExtra("image", user.profileImage)
+                startActivity(intent)
+            },
+            onOwnProfileClick = {
+                if (::currentUser.isInitialized) {
+                    val intent = Intent(this, ProfileActivity::class.java)
+                    intent.putExtra("uid", currentUser.uid)
+                    intent.putExtra("name", currentUser.name)
+                    intent.putExtra("email", currentUser.email)
+                    intent.putExtra("image", currentUser.profileImage)
+                    startActivity(intent)
+                }
+            },
+            onDeleteClick = { messageId ->
+                deleteMessage(messageId)
+            }
+        )
         messageRecyclerView.adapter = messageAdapter
         messageRecyclerView.layoutManager = LinearLayoutManager(this)
         messageRecyclerView.setHasFixedSize(true)
+    }
+
+    private fun listenToUsers() {
+        usersRegistration = userRef.addSnapshotListener { value, error ->
+            if (error != null) return@addSnapshotListener
+            
+            value?.let {
+                val newUserMap = mutableMapOf<String, User>()
+                for (doc in it.documents) {
+                    val user = doc.toObject(User::class.java)
+                    if (user != null) {
+                        newUserMap[user.uid] = user
+                    }
+                }
+                userMap.clear()
+                userMap.putAll(newUserMap)
+                messageAdapter.updateUsers(userMap)
+                
+                // Keep currentUser updated
+                val myUid = FirebaseAuth.getInstance().currentUser?.uid
+                if (myUid != null && newUserMap.containsKey(myUid)) {
+                    currentUser = newUserMap[myUid]!!
+                }
+            }
+        }
+    }
+
+    private fun deleteMessage(messageId: String) {
+        messagesRef.document(messageId).delete()
+            .addOnSuccessListener {
+                Toast.makeText(this, "Message deleted", Toast.LENGTH_SHORT).show()
+            }
+            .addOnFailureListener {
+                Toast.makeText(this, "Error deleting message", Toast.LENGTH_SHORT).show()
+            }
     }
 
     private fun getCurrentUser() {
@@ -189,12 +258,10 @@ class ChatActivity : AppCompatActivity() {
     private fun uploadImageMessage(uri: Uri) {
         if (!::currentUser.isInitialized) return
         
-        // SENDER SIDE: Show the uploading bar with the preview
         uploadingLayout.visibility = View.VISIBLE
         uploadingImageView.setImageURI(uri) 
         attachImageButton.isEnabled = false
         
-        // 1. Create a placeholder document with "PENDING" messageImage
         val docRef = messagesRef.document()
         val pendingMessage = ChatMessage(currentUser, "", "PENDING")
         
@@ -215,7 +282,6 @@ class ChatActivity : AppCompatActivity() {
                 val base64Image = Base64.encodeToString(outputStream.toByteArray(), Base64.DEFAULT)
                 
                 runOnUiThread {
-                    // 2. Update with the real image data
                     docRef.update("messageImage", base64Image)
                         .addOnSuccessListener {
                             uploadingLayout.visibility = View.GONE
@@ -241,11 +307,13 @@ class ChatActivity : AppCompatActivity() {
     }
 
     override fun onOptionsItemSelected(item: MenuItem): Boolean {
-        if (item.itemId == R.id.item_sign_out) {
-            FirebaseAuth.getInstance().signOut()
-            startActivity(Intent(this, MainActivity::class.java))
-            finish()
-            return true
+        when (item.itemId) {
+            R.id.item_sign_out -> {
+                FirebaseAuth.getInstance().signOut()
+                startActivity(Intent(this, MainActivity::class.java))
+                finish()
+                return true
+            }
         }
         return super.onOptionsItemSelected(item)
     }
