@@ -122,6 +122,7 @@ class MainActivity : AppCompatActivity() {
             }
 
             // Resize to 150x150 to keep the string small for Firestore
+
             val scaledBitmap = bitmap.scale(150, 150, false)
             val outputStream = ByteArrayOutputStream()
             scaledBitmap.compress(Bitmap.CompressFormat.JPEG, 60, outputStream)
