@@ -44,8 +44,29 @@ class MessageAdapter(private val context: Context, private val messageList: List
         val chatMessage = messageList[position]
         val user = chatMessage.user
 
-        holder.messageTv.text = chatMessage.messageText
         holder.nameTv.text = user?.name ?: "Unknown"
+
+        // Handle Message Text
+        if (chatMessage.messageText.isNotEmpty()) {
+            holder.messageTv.visibility = View.VISIBLE
+            holder.messageTv.text = chatMessage.messageText
+        } else {
+            holder.messageTv.visibility = View.GONE
+        }
+
+        // Handle Message Image (Base64)
+        if (!chatMessage.messageImage.isNullOrEmpty()) {
+            holder.messageIv.visibility = View.VISIBLE
+            try {
+                val imageBytes = Base64.decode(chatMessage.messageImage, Base64.DEFAULT)
+                val bitmap = BitmapFactory.decodeByteArray(imageBytes, 0, imageBytes.size)
+                holder.messageIv.setImageBitmap(bitmap)
+            } catch (e: Exception) {
+                holder.messageIv.visibility = View.GONE
+            }
+        } else {
+            holder.messageIv.visibility = View.GONE
+        }
 
         // Format and show time
         chatMessage.timestamp?.let {
@@ -53,6 +74,7 @@ class MessageAdapter(private val context: Context, private val messageList: List
             holder.timeTv.text = sdf.format(it.toDate())
         }
 
+        // Profile Image
         val base64Image = user?.profileImage ?: ""
         if (base64Image.isNotEmpty()) {
             try {
@@ -73,6 +95,7 @@ class MessageAdapter(private val context: Context, private val messageList: List
         val profileIv: ImageView = itemView.findViewById(R.id.itemProfileImage)
         val nameTv: TextView = itemView.findViewById(R.id.itemNameTv)
         val messageTv: TextView = itemView.findViewById(R.id.itemMessageTv)
+        val messageIv: ImageView = itemView.findViewById(R.id.itemMessageIv)
         val timeTv: TextView = itemView.findViewById(R.id.itemTimeTv)
     }
 }

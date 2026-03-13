@@ -1,54 +1,67 @@
 <?xml version="1.0" encoding="utf-8"?>
-<androidx.core.widget.NestedScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+<androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
+    android:id="@+id/main"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:fillViewport="true"
-    android:fitsSystemWindows="true">
+    android:background="#F5F5F5"
+    tools:context=".ui.ChatActivity">
 
-    <androidx.constraintlayout.widget.ConstraintLayout
-        android:id="@+id/main"
+    <androidx.recyclerview.widget.RecyclerView
+        android:id="@+id/messageRecyclerView"
+        android:layout_width="0dp"
+        android:layout_height="0dp"
+        app:layout_constraintBottom_toTopOf="@+id/inputLayout"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent" />
+
+    <ProgressBar
+        android:id="@+id/sendingProgressBar"
+        style="?android:attr/progressBarStyleHorizontal"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:indeterminate="true"
+        android:visibility="gone"
+        app:layout_constraintBottom_toTopOf="@+id/inputLayout"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent" />
+
+    <LinearLayout
+        android:id="@+id/inputLayout"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:background="#F5F5F5"
-        tools:context=".ui.ChatActivity">
+        android:background="@android:color/white"
+        android:gravity="center_vertical"
+        android:orientation="horizontal"
+        android:padding="8dp"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent">
 
-        <androidx.recyclerview.widget.RecyclerView
-            android:id="@+id/messageRecyclerView"
+        <ImageButton
+            android:id="@+id/attachImageButton"
+            android:layout_width="48dp"
+            android:layout_height="48dp"
+            android:background="?attr/selectableItemBackgroundBorderless"
+            android:src="@android:drawable/ic_menu_camera"
+            app:tint="@color/darkBlue" />
+
+        <EditText
+            android:id="@+id/messageEditText"
             android:layout_width="0dp"
-            android:layout_height="0dp"
-            app:layout_constraintBottom_toTopOf="@+id/inputLayout"
-            app:layout_constraintEnd_toEndOf="parent"
-            app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toTopOf="parent" />
-
-        <LinearLayout
-            android:id="@+id/inputLayout"
-            android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:background="@android:color/white"
-            android:orientation="horizontal"
-            android:padding="8dp"
-            app:layout_constraintBottom_toBottomOf="parent"
-            app:layout_constraintEnd_toEndOf="parent"
-            app:layout_constraintStart_toStartOf="parent">
+            android:layout_weight="1"
+            android:background="@android:color/transparent"
+            android:hint="Type a message..."
+            android:padding="12dp" />
 
-            <EditText
-                android:id="@+id/messageEditText"
-                android:layout_width="0dp"
-                android:layout_height="wrap_content"
-                android:layout_weight="1"
-                android:hint="Type a message..."
-                android:padding="12dp"
-                android:background="@android:color/transparent" />
+        <Button
+            android:id="@+id/sendButton"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Send" />
+    </LinearLayout>
 
-            <Button
-                android:id="@+id/sendButton"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="Send" />
-        </LinearLayout>
-
-    </androidx.constraintlayout.widget.ConstraintLayout>
-</androidx.core.widget.NestedScrollView>
+</androidx.constraintlayout.widget.ConstraintLayout>
