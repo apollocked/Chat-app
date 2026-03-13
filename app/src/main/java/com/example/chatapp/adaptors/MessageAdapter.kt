@@ -21,13 +21,18 @@ class MessageAdapter(private val context: Context, private val messageList: List
     }
 
     override fun onBindViewHolder(holder: MessageViewHolder, position: Int) {
-        val message = messageList[position]
-        holder.nameTv.text = message.senderName
-        holder.messageTv.text = message.messageText
+        val chatMessage = messageList[position]
+        val user = chatMessage.user
 
-        if (message.senderImage.isNotEmpty()) {
+        holder.messageTv.text = chatMessage.messageText
+        // MATCHING YOUR MODEL: user.name
+        holder.nameTv.text = user?.name ?: "Unknown"
+
+        // MATCHING YOUR MODEL: user.profileImage
+        val base64Image = user?.profileImage ?: ""
+        if (base64Image.isNotEmpty()) {
             try {
-                val imageBytes = Base64.decode(message.senderImage, Base64.DEFAULT)
+                val imageBytes = Base64.decode(base64Image, Base64.DEFAULT)
                 val bitmap = BitmapFactory.decodeByteArray(imageBytes, 0, imageBytes.size)
                 holder.profileIv.setImageBitmap(bitmap)
             } catch (e: Exception) {

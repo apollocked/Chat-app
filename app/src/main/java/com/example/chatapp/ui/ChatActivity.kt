@@ -3,6 +3,7 @@ package com.example.chatapp.ui
 import android.os.Bundle
 import android.widget.Button
 import android.widget.EditText
+import android.widget.Toast
 import androidx.activity.enableEdgeToEdge
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.view.ViewCompat
@@ -14,6 +15,7 @@ import com.example.chatapp.adaptors.MessageAdapter
 import com.example.chatapp.model.ChatMessage
 import com.example.chatapp.model.User
 import com.google.firebase.auth.FirebaseAuth
+import com.google.firebase.firestore.DocumentChange
 import com.google.firebase.firestore.FirebaseFirestore
 
 class ChatActivity : AppCompatActivity() {
@@ -26,7 +28,6 @@ class ChatActivity : AppCompatActivity() {
     private lateinit var messageAdapter: MessageAdapter
     private lateinit var messageList: MutableList<ChatMessage>
     private lateinit var currentUser: User
-
 
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -43,10 +44,31 @@ class ChatActivity : AppCompatActivity() {
 
         initRecyclerView()
         getCurrentUser()
-
-
+        sendButton.setOnClickListener {
+            insertMessage()
+        }
 
     }
+    override fun onStart() {
+        super.onStart()
+        // Added orderBy to keep chat in chronological order
+        messagesRef.orderBy("timestamp").addSnapshotListener { value, error ->
+            if (error != null) return@addSnapshotListener
+
+            value?.let {
+                for (docchange in it.documentChanges) {
+                    if (docchange.type == DocumentChange.Type.ADDED) {
+                        val chatMessage = docchange.document.toObject(ChatMessage::class.java)
+                        messageList.add(chatMessage)
+                        messageAdapter.notifyItemInserted(messageList.size - 1)
+                        // Auto-scroll to bottom
+                        messageRecyclerView.scrollToPosition(messageList.size - 1)
+                    }
+                }
+            }
+        }
+    }
+
     private fun initRecyclerView() {
         messageRecyclerView = findViewById(R.id.messageRecyclerView)
         messageList = mutableListOf()
@@ -56,13 +78,36 @@ class ChatActivity : AppCompatActivity() {
         messageRecyclerView.setHasFixedSize(true)
 
     }
-    private fun getCurrentUser(){
-        userRef.whereEqualTo("id", FirebaseAuth.getInstance().currentUser?.uid)
-            .get().addOnSuccessListener {
-                for(snapshot in it){
+
+    // Inside ChatActivity.kt
+
+    private fun getCurrentUser() {
+        val currentUid = FirebaseAuth.getInstance().currentUser?.uid
+        // MATCHING YOUR MODEL: Querying the "id" field
+        userRef.whereEqualTo("id", currentUid)
+            .get().addOnSuccessListener { querySnapshot ->
+                for (snapshot in querySnapshot) {
                     currentUser = snapshot.toObject(User::class.java)
                 }
-                }
+            }.addOnFailureListener {
+                Toast.makeText(this, "Error: ${it.message}", Toast.LENGTH_SHORT).show()
+            }
+    }
 
+    private fun insertMessage() {
+        val text = messageEditText.text.toString().trim()
+        if (text.isNotEmpty()) {
+            if (::currentUser.isInitialized) {
+                // This creates the ChatMessage using your User model
+                val chatMessage = ChatMessage(currentUser, text)
+
+                messagesRef.document().set(chatMessage)
+                    .addOnSuccessListener {
+                        messageEditText.setText("")
+                    }
+            } else {
+                Toast.makeText(this, "Still loading user data...", Toast.LENGTH_SHORT).show()
+            }
+        }
     }
 }

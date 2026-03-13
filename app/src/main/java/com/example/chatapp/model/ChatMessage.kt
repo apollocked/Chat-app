@@ -1,11 +1,11 @@
 package com.example.chatapp.model
 
 import com.google.firebase.Timestamp
+import com.google.firebase.firestore.ServerTimestamp
 
 data class ChatMessage(
-    val senderId: String = "",
-    val senderName: String = "",
+    val user: User? = null,
     val messageText: String = "",
-    val senderImage: String = "", // This holds the Base64 string
+    @ServerTimestamp
     val timestamp: Timestamp? = null
 )

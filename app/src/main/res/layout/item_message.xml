@@ -5,30 +5,34 @@
     android:orientation="horizontal"
     android:padding="8dp">
 
-    <ImageView
+    <com.google.android.material.imageview.ShapeableImageView
         android:id="@+id/itemProfileImage"
-        android:layout_width="40dp"
-        android:layout_height="40dp"
+        android:layout_width="45dp"
+        android:layout_height="45dp"
         android:src="@drawable/profile"
         android:scaleType="centerCrop"/>
 
     <LinearLayout
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_marginStart="8dp"
+        android:layout_marginStart="12dp"
         android:orientation="vertical">
 
         <TextView
             android:id="@+id/itemNameTv"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
+            android:textSize="12sp"
             android:textStyle="bold"
-            android:textColor="#333333"/>
+            android:textColor="#555555"/>
 
         <TextView
             android:id="@+id/itemMessageTv"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:textColor="#000000"/>
+            android:textSize="16sp"
+            android:textColor="#000000"
+            android:background="@drawable/chat_bubble_background"
+            android:padding="8dp"/>
     </LinearLayout>
 </LinearLayout>
