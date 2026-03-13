@@ -12,6 +12,7 @@ import android.view.View
 import android.widget.Button
 import android.widget.EditText
 import android.widget.ImageButton
+import android.widget.ImageView
 import android.widget.ProgressBar
 import android.widget.Toast
 import androidx.activity.enableEdgeToEdge
@@ -45,8 +46,9 @@ class ChatActivity : AppCompatActivity() {
     private lateinit var attachImageButton: ImageButton
     private lateinit var messageEditText: EditText
     private lateinit var messageRecyclerView: RecyclerView
-    private lateinit var sendingProgressBar: ProgressBar
-    
+    private lateinit var uploadingLayout: View
+    private lateinit var uploadingImageView: ImageView
+
     private lateinit var messageAdapter: MessageAdapter
     private lateinit var messageList: MutableList<ChatMessage>
     private lateinit var messageIds: MutableList<String>
@@ -69,7 +71,8 @@ class ChatActivity : AppCompatActivity() {
         sendButton = findViewById(R.id.sendButton)
         attachImageButton = findViewById(R.id.attachImageButton)
         messageEditText = findViewById(R.id.messageEditText)
-        sendingProgressBar = findViewById(R.id.sendingProgressBar)
+        uploadingLayout = findViewById(R.id.uploadingLayout)
+        uploadingImageView = findViewById(R.id.uploadingImageView)
 
         initRecyclerView()
         getCurrentUser()
@@ -93,7 +96,6 @@ class ChatActivity : AppCompatActivity() {
     override fun onStart() {
         super.onStart()
         
-        // Clear list and remove old listener to prevent duplicates on restart
         registration?.remove()
         messageList.clear()
         messageIds.clear()
@@ -161,12 +163,7 @@ class ChatActivity : AppCompatActivity() {
                 .addOnSuccessListener { document ->
                     if (document.exists()) {
                         currentUser = document.toObject(User::class.java)!!
-                    } else {
-                        Toast.makeText(this, "User profile not found", Toast.LENGTH_SHORT).show()
                     }
-                }
-                .addOnFailureListener {
-                    Toast.makeText(this, "Error: ${it.message}", Toast.LENGTH_SHORT).show()
                 }
         }
     }
@@ -183,12 +180,8 @@ class ChatActivity : AppCompatActivity() {
                         sendButton.isEnabled = true
                     }
                     .addOnFailureListener {
-                        Toast.makeText(this, "Failed to send: ${it.message}", Toast.LENGTH_SHORT).show()
                         sendButton.isEnabled = true
                     }
-            } else {
-                Toast.makeText(this, "Still loading user data...", Toast.LENGTH_SHORT).show()
-                getCurrentUser()
             }
         }
     }
@@ -196,8 +189,16 @@ class ChatActivity : AppCompatActivity() {
     private fun uploadImageMessage(uri: Uri) {
         if (!::currentUser.isInitialized) return
         
-        sendingProgressBar.visibility = View.VISIBLE
+        // SENDER SIDE: Show the uploading bar with the preview
+        uploadingLayout.visibility = View.VISIBLE
+        uploadingImageView.setImageURI(uri) 
         attachImageButton.isEnabled = false
+        
+        // 1. Create a placeholder document with "PENDING" messageImage
+        val docRef = messagesRef.document()
+        val pendingMessage = ChatMessage(currentUser, "", "PENDING")
+        
+        docRef.set(pendingMessage)
         
         Thread {
             try {
@@ -213,25 +214,22 @@ class ChatActivity : AppCompatActivity() {
                 scaledBitmap.compress(Bitmap.CompressFormat.JPEG, 50, outputStream)
                 val base64Image = Base64.encodeToString(outputStream.toByteArray(), Base64.DEFAULT)
                 
-                val chatMessage = ChatMessage(currentUser, "", base64Image)
-                
                 runOnUiThread {
-                    messagesRef.document().set(chatMessage)
+                    // 2. Update with the real image data
+                    docRef.update("messageImage", base64Image)
                         .addOnSuccessListener {
-                            sendingProgressBar.visibility = View.GONE
+                            uploadingLayout.visibility = View.GONE
                             attachImageButton.isEnabled = true
                         }
                         .addOnFailureListener {
-                            sendingProgressBar.visibility = View.GONE
+                            uploadingLayout.visibility = View.GONE
                             attachImageButton.isEnabled = true
-                            Toast.makeText(this, "Upload failed", Toast.LENGTH_SHORT).show()
                         }
                 }
             } catch (e: Exception) {
                 runOnUiThread {
-                    sendingProgressBar.visibility = View.GONE
+                    uploadingLayout.visibility = View.GONE
                     attachImageButton.isEnabled = true
-                    Toast.makeText(this, "Error processing image", Toast.LENGTH_SHORT).show()
                 }
             }
         }.start()

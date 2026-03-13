@@ -54,15 +54,22 @@ class MessageAdapter(private val context: Context, private val messageList: List
             holder.messageTv.visibility = View.GONE
         }
 
-        // Handle Message Image (Base64)
+        // Handle Message Image (Base64) or Placeholder
         if (!chatMessage.messageImage.isNullOrEmpty()) {
             holder.messageIv.visibility = View.VISIBLE
-            try {
-                val imageBytes = Base64.decode(chatMessage.messageImage, Base64.DEFAULT)
-                val bitmap = BitmapFactory.decodeByteArray(imageBytes, 0, imageBytes.size)
-                holder.messageIv.setImageBitmap(bitmap)
-            } catch (e: Exception) {
-                holder.messageIv.visibility = View.GONE
+            if (chatMessage.messageImage == "PENDING") {
+                // Show placeholder image while uploading
+                holder.messageIv.setImageResource(R.drawable.group)
+                holder.messageIv.alpha = 0.5f // Make it look like it's loading
+            } else {
+                holder.messageIv.alpha = 1.0f
+                try {
+                    val imageBytes = Base64.decode(chatMessage.messageImage, Base64.DEFAULT)
+                    val bitmap = BitmapFactory.decodeByteArray(imageBytes, 0, imageBytes.size)
+                    holder.messageIv.setImageBitmap(bitmap)
+                } catch (e: Exception) {
+                    holder.messageIv.visibility = View.GONE
+                }
             }
         } else {
             holder.messageIv.visibility = View.GONE
