@@ -11,5 +11,6 @@
     <string name="hint_ConfirmPassword">Confirm Password</string>
     <string name="choosePP">Choose Profile Picture</string>
     <string name="app_banner">App banner</string>
+    <string name="enter_username">Username</string>
 
 </resources>

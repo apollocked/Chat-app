@@ -1,9 +1,12 @@
 package com.example.chatapp
 
+import android.content.Intent
 import android.os.Bundle
 import android.view.View
 import android.widget.Toast
 import androidx.activity.enableEdgeToEdge
+import androidx.activity.result.ActivityResultLauncher
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AppCompatActivity
 import androidx.databinding.DataBindingUtil
 import com.example.chatapp.databinding.ActivityMainBinding
@@ -11,6 +14,8 @@ import com.google.firebase.auth.FirebaseAuth
 
 class MainActivity : AppCompatActivity() {
     private lateinit var mBinding: ActivityMainBinding
+    private lateinit var getResult: ActivityResultLauncher<Intent>
+
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -37,6 +42,17 @@ class MainActivity : AppCompatActivity() {
         }
         mBinding.textViewSignup.setOnClickListener {
             showPreviousAnimation()
+        }
+        mBinding.profileImage.setOnClickListener {
+            uploadImage()
+        }
+        getResult = registerForActivityResult(
+            ActivityResultContracts.StartActivityForResult()
+        ) {if (it.resultCode == RESULT_OK) {
+
+        mBinding.profileImage.setImageURI(it.data?.data)
+        }
+
         }
     }
 
@@ -102,6 +118,11 @@ class MainActivity : AppCompatActivity() {
         mBinding.viewFlipper.setOutAnimation(this, R.anim.slide_out_left)
         mBinding.viewFlipper.showPrevious()
     }
+private fun uploadImage() {
+val intent = Intent(Intent.ACTION_PICK)
+    intent.type = "image/*"
+    getResult.launch(intent)
+}
 
 
 }
