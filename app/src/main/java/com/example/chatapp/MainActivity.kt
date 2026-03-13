@@ -69,6 +69,13 @@ class MainActivity : AppCompatActivity() {
         mBinding.textViewSignup.setOnClickListener { showPreviousAnimation() }
     }
 
+    override fun onStart() {
+        super.onStart()
+        if (auth.currentUser != null) {
+            sendUserToNextActivity()
+        }
+    }
+
     private fun createAccount() {
         mBinding.progressBar2.visibility = View.VISIBLE
         val email = mBinding.signupInputEmail.editText?.text.toString().trim()
@@ -91,7 +98,7 @@ class MainActivity : AppCompatActivity() {
 
                     // Convert image and Save to Firestore
                     val base64Image = encodeImageToBase64(imageUri)
-                    saveUserToFirestore(uid, username, base64Image)
+                    saveUserToFirestore(uid, username, email, base64Image)
                     mBinding.progressBar2.visibility = View.GONE
                     mBinding.signup.isEnabled = true
                 } else {
@@ -134,8 +141,9 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
-    private fun saveUserToFirestore(uid: String, username: String, base64Image: String) {
-        val user = User(username, base64Image, uid)
+    private fun saveUserToFirestore(uid: String, username: String, email: String, base64Image: String) {
+        // Using named arguments to ensure correct field mapping
+        val user = User(uid = uid, name = username, email = email, profileImage = base64Image)
 
         db.collection("users").document(uid).set(user)
             .addOnSuccessListener {
@@ -190,5 +198,4 @@ class MainActivity : AppCompatActivity() {
         startActivity(Intent(this, ChatActivity::class.java))
         finish()
     }
-
 }

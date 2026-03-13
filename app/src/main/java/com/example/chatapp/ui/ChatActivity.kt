@@ -79,34 +79,40 @@ class ChatActivity : AppCompatActivity() {
 
     }
 
-    // Inside ChatActivity.kt
-
     private fun getCurrentUser() {
         val currentUid = FirebaseAuth.getInstance().currentUser?.uid
-        // MATCHING YOUR MODEL: Querying the "id" field
-        userRef.whereEqualTo("id", currentUid)
-            .get().addOnSuccessListener { querySnapshot ->
-                for (snapshot in querySnapshot) {
-                    currentUser = snapshot.toObject(User::class.java)
+        if (currentUid != null) {
+            // Get user by document ID (which is the UID)
+            userRef.document(currentUid).get()
+                .addOnSuccessListener { document ->
+                    if (document.exists()) {
+                        currentUser = document.toObject(User::class.java)!!
+                    } else {
+                        Toast.makeText(this, "User profile not found", Toast.LENGTH_SHORT).show()
+                    }
                 }
-            }.addOnFailureListener {
-                Toast.makeText(this, "Error: ${it.message}", Toast.LENGTH_SHORT).show()
-            }
+                .addOnFailureListener {
+                    Toast.makeText(this, "Error: ${it.message}", Toast.LENGTH_SHORT).show()
+                }
+        }
     }
 
     private fun insertMessage() {
         val text = messageEditText.text.toString().trim()
         if (text.isNotEmpty()) {
             if (::currentUser.isInitialized) {
-                // This creates the ChatMessage using your User model
                 val chatMessage = ChatMessage(currentUser, text)
-
                 messagesRef.document().set(chatMessage)
                     .addOnSuccessListener {
                         messageEditText.setText("")
                     }
+                    .addOnFailureListener {
+                        Toast.makeText(this, "Failed to send: ${it.message}", Toast.LENGTH_SHORT).show()
+                    }
             } else {
                 Toast.makeText(this, "Still loading user data...", Toast.LENGTH_SHORT).show()
+                // Retry loading user if it failed before
+                getCurrentUser()
             }
         }
     }
