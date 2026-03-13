@@ -11,9 +11,11 @@
         tools:context=".MainActivity">
 
         <ImageView
+
             android:id="@+id/logo"
             android:layout_width="wrap_content"
             android:layout_height="300dp"
+            android:contentDescription="@string/app_banner"
             android:src="@drawable/group" />
 
         <ViewFlipper
@@ -28,7 +30,7 @@
                 android:orientation="vertical">
 
                 <com.google.android.material.textfield.TextInputLayout
-                    android:id="@+id/signin_input_email"
+                    android:id="@+id/signIn_input_email"
                     style="@style/Widget.Material3.TextInputLayout.OutlinedBox"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
@@ -36,7 +38,7 @@
                     app:endIconMode="clear_text">
 
                     <com.google.android.material.textfield.TextInputEditText
-                        android:id="@+id/signin_email"
+                        android:id="@+id/signIn_email"
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
                         android:inputType="textEmailAddress" />
@@ -44,7 +46,7 @@
                 </com.google.android.material.textfield.TextInputLayout>
 
                 <com.google.android.material.textfield.TextInputLayout
-                    android:id="@+id/signin_input_password"
+                    android:id="@+id/signIn_input_password"
                     style="@style/Widget.Material3.TextInputLayout.OutlinedBox"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
@@ -52,7 +54,7 @@
                     app:endIconMode="password_toggle">
 
                     <com.google.android.material.textfield.TextInputEditText
-                        android:id="@+id/signin_password"
+                        android:id="@+id/signIn_password"
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
                         android:inputType="textPassword" />
@@ -60,7 +62,7 @@
                 </com.google.android.material.textfield.TextInputLayout>
 
                 <androidx.appcompat.widget.AppCompatButton
-                    android:id="@+id/signin"
+                    android:id="@+id/signIn"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:layout_marginTop="15dp"
@@ -69,14 +71,26 @@
                     android:textColor="@color/white"
                     android:textStyle="bold" />
 
-                <TextView
-                    android:id="@+id/text_view_register"
+                <androidx.appcompat.widget.LinearLayoutCompat
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:layout_marginTop="15dp"
-                    android:background="?attr/selectableItemBackgroundBorderless"
-                    android:text="@string/text_veiw_register"
-                    android:textColor="@android:color/holo_blue_light" />
+                    android:orientation="horizontal">
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginEnd="5dp"
+                        android:text="@string/doNot_have_account" />
+
+                    <TextView
+                        android:id="@+id/text_view_register"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:background="?attr/selectableItemBackgroundBorderless"
+                        android:text="@string/text_view_register"
+                        android:textColor="@android:color/holo_blue_light" />
+                </androidx.appcompat.widget.LinearLayoutCompat>
 
             </androidx.appcompat.widget.LinearLayoutCompat>
 
@@ -143,53 +157,61 @@
                     android:text="@string/btn_SignUp"
                     android:textColor="@color/white"
                     android:textStyle="bold" />
-                <androidx.appcompat.widget.LinearLayoutCompat
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:orientation="horizontal"
-                    android:gravity="center_horizontal">
+
+
+
                     <TextView
-                        android:id="@+id/text_view_signin"
+                        android:layout_marginTop="15dp"
+                        android:id="@+id/text_view_goto_profile"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:layout_marginTop="15dp"
-                        android:background="?attr/selectableItemBackgroundBorderless"
-                        android:text="@string/text_veiw_signin"
-                        android:textColor="@android:color/holo_blue_light" />
-                    <TextView
                         android:layout_marginStart="10dp"
-                        android:id="@+id/text_view_goto_orofile"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:layout_marginTop="15dp"
                         android:background="?attr/selectableItemBackgroundBorderless"
                         android:text="@string/choosePP"
                         android:textColor="@android:color/holo_blue_light" />
 
-                </androidx.appcompat.widget.LinearLayoutCompat>
-
-
-
-
-
-            </androidx.appcompat.widget.LinearLayoutCompat>
             <androidx.appcompat.widget.LinearLayoutCompat
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:orientation="vertical"
-                android:gravity="center">
+
+                android:gravity="center_horizontal"
+                android:orientation="horizontal">
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginEnd="5dp"
+                    android:text="@string/already_have_account" />
+
+                <TextView
+                    android:id="@+id/text_view_signIn"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:background="?attr/selectableItemBackgroundBorderless"
+                    android:text="@string/text_view_signIn"
+                    android:textColor="@android:color/holo_blue_light" />
+
+            </androidx.appcompat.widget.LinearLayoutCompat>
+
+            </androidx.appcompat.widget.LinearLayoutCompat>
+
+            <androidx.appcompat.widget.LinearLayoutCompat
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:gravity="center"
+                android:orientation="vertical">
+
                 <com.mikhaellopez.circularimageview.CircularImageView
                     android:layout_width="150dp"
                     android:layout_height="150dp"
+                    android:background="?attr/selectableItemBackgroundBorderless"
+                    android:clickable="true"
+                    android:focusable="true"
                     android:src="@drawable/profile"
                     app:civ_border_color="#3f51b5"
                     app:civ_border_width="4dp"
                     app:civ_shadow="true"
-                    app:civ_shadow_radius="10dp"
                     app:civ_shadow_color="#3f51b5"
-                    android:background="?attr/selectableItemBackgroundBorderless"
-                    android:clickable="true"
-                    android:focusable="true"/>
+                    app:civ_shadow_radius="10dp" />
 
                 <TextView
                     android:id="@+id/textViewSignup"
@@ -197,7 +219,7 @@
                     android:layout_height="wrap_content"
                     android:layout_marginTop="15dp"
                     android:background="?attr/selectableItemBackgroundBorderless"
-                    android:text="@string/text_veiw_signin"
+                    android:text="@string/text_view_signIn"
                     android:textColor="@android:color/holo_blue_light" />
             </androidx.appcompat.widget.LinearLayoutCompat>
 

@@ -4,11 +4,12 @@
     <string name="hint_Password">Password</string>
     <string name="btn_SignIn">Sign in</string>
     <string name="btn_SignUp">Sign up</string>
-    <string name="dont_have_account">Don\'t have an account?</string>
-    <string name="text_veiw_register"> Register</string>
-    <string name="text_veiw_signin">Sign in</string>
+    <string name="doNot_have_account">Don\'t have an account?</string>
+    <string name="text_view_register"> Register</string>
+    <string name="text_view_signIn">Sign in</string>
     <string name="already_have_account">Already have an account?</string>
     <string name="hint_ConfirmPassword">Confirm Password</string>
     <string name="choosePP">Choose Profile Picture</string>
+    <string name="app_banner">App banner</string>
 
 </resources>

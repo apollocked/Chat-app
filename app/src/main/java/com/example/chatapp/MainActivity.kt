@@ -21,7 +21,7 @@ class MainActivity : AppCompatActivity() {
         // 2. Then enable edge-to-edge
         enableEdgeToEdge()
 
-        mBinding.signin.setOnClickListener { signIn() }
+        mBinding.signIn.setOnClickListener { signIn() }
 
         mBinding.signup.setOnClickListener { createAccount() }
 
@@ -29,10 +29,10 @@ class MainActivity : AppCompatActivity() {
             showNextAnimation()
         }
 
-        mBinding.textViewSignin.setOnClickListener {
+        mBinding.textViewSignIn.setOnClickListener {
             showPreviousAnimation()
         }
-        mBinding.textViewGotoOrofile.setOnClickListener {
+        mBinding.textViewGotoProfile.setOnClickListener {
             showNextAnimation()
         }
         mBinding.textViewSignup.setOnClickListener {
@@ -41,8 +41,8 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun signIn() {
-        val email = mBinding.signinInputEmail.editText?.text.toString().trim()
-        val password = mBinding.signinInputPassword.editText?.text.toString().trim()
+        val email = mBinding.signInInputEmail.editText?.text.toString().trim()
+        val password = mBinding.signInInputPassword.editText?.text.toString().trim()
         if (email.isEmpty() || password.isEmpty()) {
             Toast.makeText(this, "Please enter email and password", Toast.LENGTH_LONG).show()
             return
