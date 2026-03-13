@@ -1,13 +1,16 @@
 package com.example.chatapp
 
 import android.content.Intent
+import android.content.pm.PackageManager
 import android.os.Bundle
 import android.view.View
 import android.widget.Toast
 import androidx.activity.enableEdgeToEdge
 import androidx.activity.result.ActivityResultLauncher
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
+import androidx.core.app.ActivityCompat
 import androidx.databinding.DataBindingUtil
 import com.example.chatapp.databinding.ActivityMainBinding
 import com.google.firebase.auth.FirebaseAuth
@@ -15,6 +18,7 @@ import com.google.firebase.auth.FirebaseAuth
 class MainActivity : AppCompatActivity() {
     private lateinit var mBinding: ActivityMainBinding
     private lateinit var getResult: ActivityResultLauncher<Intent>
+    private val STORAGE_REQUEST_CODE = 415541
 
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -44,7 +48,12 @@ class MainActivity : AppCompatActivity() {
             showPreviousAnimation()
         }
         mBinding.profileImage.setOnClickListener {
-            uploadImage()
+            if (ActivityCompat.checkSelfPermission(this@MainActivity,android.Manifest.permission.READ_EXTERNAL_STORAGE)
+                != PackageManager.PERMISSION_GRANTED){
+                requestPermissions()}else{
+              uploadImage()
+            }
+
         }
         getResult = registerForActivityResult(
             ActivityResultContracts.StartActivityForResult()
@@ -118,11 +127,47 @@ class MainActivity : AppCompatActivity() {
         mBinding.viewFlipper.setOutAnimation(this, R.anim.slide_out_left)
         mBinding.viewFlipper.showPrevious()
     }
-private fun uploadImage() {
+private fun getImage() {
 val intent = Intent(Intent.ACTION_PICK)
     intent.type = "image/*"
     getResult.launch(intent)
 }
+private fun requestPermissions() {
+if (ActivityCompat.shouldShowRequestPermissionRationale(
+        this,android.Manifest.permission.READ_EXTERNAL_STORAGE)){
+AlertDialog.Builder(this@MainActivity)
+    .setPositiveButton("yes"){_,_->
+        ActivityCompat.requestPermissions(this, arrayOf(
+            android.Manifest.permission.READ_EXTERNAL_STORAGE),STORAGE_REQUEST_CODE
+        )}.setNegativeButton("no") { dialog, _ ->
 
+            dialog.dismiss()
+    }.setTitle("Permission is required")
+    .setMessage("Permission is required to select image")
+    .create().show()
+
+    }else{
+        ActivityCompat.requestPermissions(this, arrayOf(
+            android.Manifest.permission.READ_EXTERNAL_STORAGE),STORAGE_REQUEST_CODE)
+    }
+}
+private fun uploadImage() {
+
+}
+    override fun onRequestPermissionsResult(
+        requestCode: Int,
+        permissions: Array<out String>,
+        grantResults: IntArray
+        ) {
+        super.onRequestPermissionsResult(requestCode, permissions, grantResults)
+        if (requestCode == STORAGE_REQUEST_CODE) {
+            if (grantResults.isNotEmpty() && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+                getImage()
+            } else {
+                Toast.makeText(this@MainActivity, "Permission denied",
+                    Toast.LENGTH_LONG).show()
+            }
+        }
+    }
 
 }
