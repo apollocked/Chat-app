@@ -5,29 +5,25 @@ import android.graphics.Bitmap
 import android.graphics.BitmapFactory
 import android.net.Uri
 import android.os.Bundle
+import android.text.Editable
+import android.text.TextWatcher
 import android.util.Base64
 import android.view.Menu
 import android.view.MenuItem
 import android.view.View
-import android.widget.Button
-import android.widget.EditText
-import android.widget.ImageButton
-import android.widget.ImageView
-import android.widget.ProgressBar
 import android.widget.Toast
 import androidx.activity.enableEdgeToEdge
 import androidx.activity.result.ActivityResultLauncher
 import androidx.activity.result.PickVisualMediaRequest
 import androidx.activity.result.contract.ActivityResultContracts
-import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
 import androidx.recyclerview.widget.LinearLayoutManager
-import androidx.recyclerview.widget.RecyclerView
 import com.example.chatapp.MainActivity
 import com.example.chatapp.R
 import com.example.chatapp.adaptors.MessageAdapter
+import com.example.chatapp.databinding.ActivityChatBinding
 import com.example.chatapp.model.ChatMessage
 import com.example.chatapp.model.User
 import com.google.firebase.auth.FirebaseAuth
@@ -39,18 +35,13 @@ import java.io.ByteArrayOutputStream
 import androidx.core.graphics.scale
 
 class ChatActivity : AppCompatActivity() {
+    private lateinit var binding: ActivityChatBinding
     private val db = FirebaseFirestore.getInstance()
+    private val auth = FirebaseAuth.getInstance()
+    
     private val userRef = db.collection("users")
     private val messagesRef = db.collection("messages")
     
-    private lateinit var sendButton: Button
-    private lateinit var attachImageButton: ImageButton
-    private lateinit var messageEditText: EditText
-    private lateinit var messageRecyclerView: RecyclerView
-    private lateinit var uploadingLayout: View
-    private lateinit var uploadingImageView: ImageView
-    private lateinit var sendingProgressBar: ProgressBar
-
     private lateinit var messageAdapter: MessageAdapter
     private lateinit var messageList: MutableList<ChatMessage>
     private lateinit var messageIds: MutableList<String>
@@ -60,30 +51,29 @@ class ChatActivity : AppCompatActivity() {
     private lateinit var pickImageLauncher: ActivityResultLauncher<PickVisualMediaRequest>
     private var messagesRegistration: ListenerRegistration? = null
     private var usersRegistration: ListenerRegistration? = null
+    private var typingRegistration: ListenerRegistration? = null
 
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
-        setContentView(R.layout.activity_chat)
-        ViewCompat.setOnApplyWindowInsetsListener(findViewById(R.id.main)) { v, insets ->
+        binding = ActivityChatBinding.inflate(layoutInflater)
+        setContentView(binding.root)
+        
+        ViewCompat.setOnApplyWindowInsetsListener(binding.main) { v, insets ->
             val systemBars = insets.getInsets(WindowInsetsCompat.Type.systemBars())
             v.setPadding(systemBars.left, systemBars.top, systemBars.right, systemBars.bottom)
             insets
         }
         
-        sendButton = findViewById(R.id.sendButton)
-        attachImageButton = findViewById(R.id.attachImageButton)
-        messageEditText = findViewById(R.id.messageEditText)
-        uploadingLayout = findViewById(R.id.uploadingLayout)
-        uploadingImageView = findViewById(R.id.uploadingImageView)
-        sendingProgressBar = findViewById(R.id.sendingProgressBar)
+        setSupportActionBar(binding.toolbar)
 
         initRecyclerView()
         getCurrentUser()
         listenToUsers()
+        listenToTypingStatus()
         
-        sendButton.setOnClickListener {
+        binding.sendButton.setOnClickListener {
             insertMessage()
         }
         
@@ -93,15 +83,72 @@ class ChatActivity : AppCompatActivity() {
             }
         }
         
-        attachImageButton.setOnClickListener {
+        binding.attachImageButton.setOnClickListener {
             pickImageLauncher.launch(PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly))
         }
 
+        setupTypingListener()
     }
     
     override fun onStart() {
         super.onStart()
-        
+        updateStatus("Online")
+        listenToMessages()
+    }
+
+    override fun onStop() {
+        super.onStop()
+        updateStatus("Offline")
+        messagesRegistration?.remove()
+        usersRegistration?.remove()
+        typingRegistration?.remove()
+    }
+
+    private fun updateStatus(status: String) {
+        val uid = auth.currentUser?.uid ?: return
+        val map = mutableMapOf<String, Any>()
+        map["status"] = status
+        if (status == "Offline") {
+            map["lastSeen"] = System.currentTimeMillis()
+        }
+        userRef.document(uid).update(map)
+    }
+
+    private fun setupTypingListener() {
+        binding.messageEditText.addTextChangedListener(object : TextWatcher {
+            override fun beforeTextChanged(s: CharSequence?, start: Int, count: Int, after: Int) {}
+            override fun onTextChanged(s: CharSequence?, start: Int, before: Int, count: Int) {
+                setTypingStatus(s?.isNotEmpty() == true)
+            }
+            override fun afterTextChanged(s: Editable?) {}
+        })
+    }
+
+    private fun setTypingStatus(isTyping: Boolean) {
+        val uid = auth.currentUser?.uid ?: return
+        db.collection("typing").document(uid).set(mapOf("isTyping" to isTyping))
+    }
+
+    private fun listenToTypingStatus() {
+        typingRegistration = db.collection("typing").addSnapshotListener { value, error ->
+            if (error != null) return@addSnapshotListener
+            val typingUsers = mutableListOf<String>()
+            value?.documents?.forEach { doc ->
+                if (doc.id != auth.currentUser?.uid && doc.getBoolean("isTyping") == true) {
+                    val user = userMap[doc.id]
+                    user?.let { typingUsers.add(it.name) }
+                }
+            }
+            if (typingUsers.isNotEmpty()) {
+                binding.tvTypingStatus.visibility = View.VISIBLE
+                binding.tvTypingStatus.text = "${typingUsers.joinToString(", ")} is typing..."
+            } else {
+                binding.tvTypingStatus.visibility = View.GONE
+            }
+        }
+    }
+
+    private fun listenToMessages() {
         messagesRegistration?.remove()
         messageList.clear()
         messageIds.clear()
@@ -121,7 +168,12 @@ class ChatActivity : AppCompatActivity() {
                                 messageList.add(chatMessage)
                                 messageIds.add(docId)
                                 messageAdapter.notifyItemInserted(messageList.size - 1)
-                                messageRecyclerView.smoothScrollToPosition(messageList.size - 1)
+                                binding.messageRecyclerView.smoothScrollToPosition(messageList.size - 1)
+                                
+                                // Mark as read if received
+                                if (chatMessage.user?.uid != auth.currentUser?.uid && chatMessage.status < 2) {
+                                    messagesRef.document(docId).update("status", 2)
+                                }
                             }
                         }
                         DocumentChange.Type.MODIFIED -> {
@@ -146,16 +198,7 @@ class ChatActivity : AppCompatActivity() {
         }
     }
 
-    override fun onStop() {
-        super.onStop()
-        messagesRegistration?.remove()
-        messagesRegistration = null
-        usersRegistration?.remove()
-        usersRegistration = null
-    }
-
     private fun initRecyclerView() {
-        messageRecyclerView = findViewById(R.id.messageRecyclerView)
         messageList = mutableListOf()
         messageIds = mutableListOf()
         messageAdapter = MessageAdapter(
@@ -185,9 +228,9 @@ class ChatActivity : AppCompatActivity() {
                 deleteMessage(messageId)
             }
         )
-        messageRecyclerView.adapter = messageAdapter
-        messageRecyclerView.layoutManager = LinearLayoutManager(this)
-        messageRecyclerView.setHasFixedSize(true)
+        binding.messageRecyclerView.adapter = messageAdapter
+        binding.messageRecyclerView.layoutManager = LinearLayoutManager(this)
+        binding.messageRecyclerView.setHasFixedSize(true)
     }
 
     private fun listenToUsers() {
@@ -206,8 +249,7 @@ class ChatActivity : AppCompatActivity() {
                 userMap.putAll(newUserMap)
                 messageAdapter.updateUsers(userMap)
                 
-                // Keep currentUser updated
-                val myUid = FirebaseAuth.getInstance().currentUser?.uid
+                val myUid = auth.currentUser?.uid
                 if (myUid != null && newUserMap.containsKey(myUid)) {
                     currentUser = newUserMap[myUid]!!
                 }
@@ -220,13 +262,10 @@ class ChatActivity : AppCompatActivity() {
             .addOnSuccessListener {
                 Toast.makeText(this, "Message deleted", Toast.LENGTH_SHORT).show()
             }
-            .addOnFailureListener {
-                Toast.makeText(this, "Error deleting message", Toast.LENGTH_SHORT).show()
-            }
     }
 
     private fun getCurrentUser() {
-        val currentUid = FirebaseAuth.getInstance().currentUser?.uid
+        val currentUid = auth.currentUser?.uid
         if (currentUid != null) {
             userRef.document(currentUid).get()
                 .addOnSuccessListener { document ->
@@ -238,18 +277,18 @@ class ChatActivity : AppCompatActivity() {
     }
 
     private fun insertMessage() {
-        val text = messageEditText.text.toString().trim()
+        val text = binding.messageEditText.text.toString().trim()
         if (text.isNotEmpty()) {
             if (::currentUser.isInitialized) {
-                sendButton.isEnabled = false
-                val chatMessage = ChatMessage(currentUser, text, null)
+                binding.sendButton.isEnabled = false
+                val chatMessage = ChatMessage(currentUser, text, null, status = 1)
                 messagesRef.document().set(chatMessage)
                     .addOnSuccessListener {
-                        messageEditText.setText("")
-                        sendButton.isEnabled = true
+                        binding.messageEditText.setText("")
+                        binding.sendButton.isEnabled = true
                     }
                     .addOnFailureListener {
-                        sendButton.isEnabled = true
+                        binding.sendButton.isEnabled = true
                     }
             }
         }
@@ -258,14 +297,9 @@ class ChatActivity : AppCompatActivity() {
     private fun uploadImageMessage(uri: Uri) {
         if (!::currentUser.isInitialized) return
         
-        uploadingLayout.visibility = View.VISIBLE
-        uploadingImageView.setImageURI(uri) 
-        attachImageButton.isEnabled = false
-        
-        val docRef = messagesRef.document()
-        val pendingMessage = ChatMessage(currentUser, "", "PENDING")
-        
-        docRef.set(pendingMessage)
+        binding.uploadingLayout.visibility = View.VISIBLE
+        binding.uploadingImageView.setImageURI(uri) 
+        binding.attachImageButton.isEnabled = false
         
         Thread {
             try {
@@ -282,20 +316,21 @@ class ChatActivity : AppCompatActivity() {
                 val base64Image = Base64.encodeToString(outputStream.toByteArray(), Base64.DEFAULT)
                 
                 runOnUiThread {
-                    docRef.update("messageImage", base64Image)
+                    val chatMessage = ChatMessage(currentUser, "", base64Image, status = 1)
+                    messagesRef.document().set(chatMessage)
                         .addOnSuccessListener {
-                            uploadingLayout.visibility = View.GONE
-                            attachImageButton.isEnabled = true
+                            binding.uploadingLayout.visibility = View.GONE
+                            binding.attachImageButton.isEnabled = true
                         }
                         .addOnFailureListener {
-                            uploadingLayout.visibility = View.GONE
-                            attachImageButton.isEnabled = true
+                            binding.uploadingLayout.visibility = View.GONE
+                            binding.attachImageButton.isEnabled = true
                         }
                 }
             } catch (e: Exception) {
                 runOnUiThread {
-                    uploadingLayout.visibility = View.GONE
-                    attachImageButton.isEnabled = true
+                    binding.uploadingLayout.visibility = View.GONE
+                    binding.attachImageButton.isEnabled = true
                 }
             }
         }.start()
@@ -309,7 +344,8 @@ class ChatActivity : AppCompatActivity() {
     override fun onOptionsItemSelected(item: MenuItem): Boolean {
         when (item.itemId) {
             R.id.item_sign_out -> {
-                FirebaseAuth.getInstance().signOut()
+                updateStatus("Offline")
+                auth.signOut()
                 startActivity(Intent(this, MainActivity::class.java))
                 finish()
                 return true

@@ -9,7 +9,7 @@
 
     <style name="Theme.ChatApp" parent="Base.Theme.ChatApp" />
 
-    <style name="myTheme" parent="Theme.MaterialComponents.DayNight.DarkActionBar">
+    <style name="myTheme" parent="Theme.MaterialComponents.DayNight.NoActionBar">
         <item name="colorPrimary">@color/darkBlue</item>
         <item name="colorPrimaryVariant">@color/darkBlue</item>
         <item name="colorOnPrimary">@color/white</item>

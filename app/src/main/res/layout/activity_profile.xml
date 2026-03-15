@@ -25,17 +25,19 @@
             app:navigationIconTint="@color/white" />
     </com.google.android.material.appbar.AppBarLayout>
 
-    <com.google.android.material.imageview.ShapeableImageView
+    <com.mikhaellopez.circularimageview.CircularImageView
         android:id="@+id/profileImageLarge"
         android:layout_width="150dp"
         android:layout_height="150dp"
         android:layout_marginTop="64dp"
-        android:scaleType="centerCrop"
         android:src="@drawable/profile"
+        app:civ_border_color="@color/darkBlue"
+        app:civ_border_width="2dp"
+        app:civ_shadow="true"
+        app:civ_shadow_radius="10dp"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@id/appBarLayout"
-        app:shapeAppearanceOverlay="@style/CircleImageView" />
+        app:layout_constraintTop_toBottomOf="@id/appBarLayout" />
 
     <TextView
         android:id="@+id/profileNameLarge"

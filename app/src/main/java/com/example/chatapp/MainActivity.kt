@@ -34,7 +34,6 @@ class MainActivity : AppCompatActivity() {
     private val auth = FirebaseAuth.getInstance()
     private val db = FirebaseFirestore.getInstance()
 
-
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         mBinding = DataBindingUtil.setContentView(this, R.layout.activity_main)
@@ -72,8 +71,19 @@ class MainActivity : AppCompatActivity() {
     override fun onStart() {
         super.onStart()
         if (auth.currentUser != null) {
+            updateStatus("Online")
             sendUserToNextActivity()
         }
+    }
+
+    private fun updateStatus(status: String) {
+        val uid = auth.currentUser?.uid ?: return
+        val map = mutableMapOf<String, Any>()
+        map["status"] = status
+        if (status == "Offline") {
+            map["lastSeen"] = System.currentTimeMillis()
+        }
+        db.collection("users").document(uid).update(map)
     }
 
     private fun createAccount() {
@@ -88,15 +98,13 @@ class MainActivity : AppCompatActivity() {
             return
         }
 
-        // Disable button to prevent double clicks
         mBinding.signup.isEnabled = false
 
         auth.createUserWithEmailAndPassword(email, password)
             .addOnCompleteListener { task ->
                 if (task.isSuccessful) {
                     val uid = auth.currentUser?.uid ?: ""
-
-                    // Convert image and Save to Firestore
+                    // Convert image to Base64 and save to Firestore
                     val base64Image = encodeImageToBase64(imageUri)
                     saveUserToFirestore(uid, username, email, base64Image)
                 } else {
@@ -117,7 +125,6 @@ class MainActivity : AppCompatActivity() {
                 val inputStream = contentResolver.openInputStream(uri)
                 BitmapFactory.decodeStream(inputStream)
             } else {
-                // If user didn't pick an image, convert the profile.xml vector to bitmap
                 val drawable = ContextCompat.getDrawable(this, R.drawable.profile)
                 val b = createBitmap(drawable!!.intrinsicWidth, drawable.intrinsicHeight)
                 val canvas = Canvas(b)
@@ -126,8 +133,7 @@ class MainActivity : AppCompatActivity() {
                 b
             }
 
-            // Resize to 150x150 to keep the string small for Firestore
-
+            // Keep it small for Firestore (Base64 adds ~33% size)
             val scaledBitmap = bitmap.scale(150, 150, false)
             val outputStream = ByteArrayOutputStream()
             scaledBitmap.compress(Bitmap.CompressFormat.JPEG, 60, outputStream)
@@ -140,19 +146,22 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun saveUserToFirestore(uid: String, username: String, email: String, base64Image: String) {
-        // Using named arguments to ensure correct field mapping
-        val user = User(uid = uid, name = username, email = email, profileImage = base64Image)
+        val user = User(
+            uid = uid, 
+            name = username, 
+            email = email, 
+            profileImage = base64Image,
+            status = "Online",
+            lastSeen = System.currentTimeMillis()
+        )
 
         db.collection("users").document(uid).set(user)
             .addOnSuccessListener {
                 mBinding.progressBar2.visibility = View.GONE
                 mBinding.signup.isEnabled = true
-                
-                // Sign out so they can log in manually
                 auth.signOut()
-                
                 Toast.makeText(this, "Account Created! Please Sign In", Toast.LENGTH_SHORT).show()
-                showPreviousAnimation() // Navigate back to Sign In layout
+                showPreviousAnimation()
             }
             .addOnFailureListener { e ->
                 mBinding.progressBar2.visibility = View.GONE
@@ -175,6 +184,7 @@ class MainActivity : AppCompatActivity() {
 
         auth.signInWithEmailAndPassword(email, password).addOnCompleteListener { task ->
             if (task.isSuccessful) {
+                updateStatus("Online")
                 Toast.makeText(this, "Success!", Toast.LENGTH_SHORT).show()
                 mBinding.progressBar1.visibility = View.GONE
                 sendUserToNextActivity()
