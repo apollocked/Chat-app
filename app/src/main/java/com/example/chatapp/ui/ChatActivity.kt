@@ -62,9 +62,18 @@ class ChatActivity : AppCompatActivity() {
         binding = ActivityChatBinding.inflate(layoutInflater)
         setContentView(binding.root)
         
+        // Correctly handle Edge-to-Edge insets for the Keyboard (IME)
         ViewCompat.setOnApplyWindowInsetsListener(binding.main) { v, insets ->
             val systemBars = insets.getInsets(WindowInsetsCompat.Type.systemBars())
-            v.setPadding(systemBars.left, systemBars.top, systemBars.right, systemBars.bottom)
+            val ime = insets.getInsets(WindowInsetsCompat.Type.ime())
+            
+            // Adjust bottom padding based on the keyboard (IME) or navigation bar
+            v.setPadding(
+                systemBars.left, 
+                systemBars.top, 
+                systemBars.right, 
+                if (ime.bottom > systemBars.bottom) ime.bottom else systemBars.bottom
+            )
             insets
         }
         

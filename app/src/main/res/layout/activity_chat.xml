@@ -51,6 +51,8 @@
         android:id="@+id/messageRecyclerView"
         android:layout_width="0dp"
         android:layout_height="0dp"
+        android:clipToPadding="false"
+        android:paddingBottom="8dp"
         app:layout_constraintBottom_toTopOf="@+id/uploadingLayout"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
@@ -97,6 +99,7 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:background="@android:color/white"
+        android:elevation="8dp"
         android:gravity="center_vertical"
         android:orientation="horizontal"
         android:padding="8dp"
@@ -120,6 +123,8 @@
             android:layout_weight="1"
             android:background="@android:color/transparent"
             android:hint="Type a message..."
+            android:inputType="textCapSentences|textAutoCorrect|textMultiLine"
+            android:maxLines="4"
             android:padding="12dp" />
 
         <Button
