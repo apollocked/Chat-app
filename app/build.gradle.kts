@@ -42,8 +42,9 @@ android {
 }
 
 dependencies {
+    implementation("com.github.bumptech.glide:glide:4.16.0")
+    kapt("com.github.bumptech.glide:compiler:4.16.0")
     implementation("com.mikhaellopez:circularimageview:4.3.1")
-    implementation("com.google.firebase:firebase-storage:22.0.1")
     implementation(libs.androidx.core.ktx)
     implementation(libs.androidx.appcompat)
     implementation(libs.material)
