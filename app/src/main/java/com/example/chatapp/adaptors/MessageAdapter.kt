@@ -2,6 +2,7 @@ package com.example.chatapp.adaptors
 
 import android.content.Context
 import android.graphics.BitmapFactory
+import android.graphics.Color
 import android.util.Base64
 import android.view.LayoutInflater
 import android.view.View
@@ -93,6 +94,22 @@ class MessageAdapter(
 
             loadImage(user?.profileImage, binding.itemProfileImage, isProfile = true)
 
+            // Read Receipt logic
+            when (message.status) {
+                1 -> { // Sent
+                    binding.itemStatusIv.setImageResource(R.drawable.ic_check)
+                    binding.itemStatusIv.setColorFilter(Color.GRAY)
+                }
+                2 -> { // Read
+                    binding.itemStatusIv.setImageResource(R.drawable.ic_done_all)
+                    binding.itemStatusIv.setColorFilter(Color.parseColor("#4CAF50")) // Green
+                }
+                else -> {
+                    binding.itemStatusIv.setImageResource(R.drawable.ic_access_time)
+                    binding.itemStatusIv.setColorFilter(Color.GRAY)
+                }
+            }
+
             binding.itemProfileImage.setOnClickListener { onOwnProfileClick() }
             
             binding.root.setOnLongClickListener {
@@ -138,13 +155,11 @@ class MessageAdapter(
         }
 
         if (imageData.startsWith("http")) {
-            // It's a URL
             Glide.with(context)
                 .load(imageData)
                 .placeholder(if (isProfile) R.drawable.profile else R.drawable.group)
                 .into(imageView)
         } else {
-            // It's likely Base64 (from old messages)
             try {
                 val imageBytes = Base64.decode(imageData, Base64.DEFAULT)
                 val bitmap = BitmapFactory.decodeByteArray(imageBytes, 0, imageBytes.size)

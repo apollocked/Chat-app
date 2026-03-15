@@ -21,9 +21,12 @@ import androidx.core.view.WindowInsetsCompat
 import com.example.chatapp.MainActivity
 import com.example.chatapp.R
 import com.example.chatapp.databinding.ActivityProfileBinding
+import com.example.chatapp.model.User
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
 import java.io.ByteArrayOutputStream
+import java.text.SimpleDateFormat
+import java.util.Locale
 
 class ProfileActivity : AppCompatActivity() {
 
@@ -60,6 +63,7 @@ class ProfileActivity : AppCompatActivity() {
         binding.profileEmailLarge.text = email ?: ""
 
         displayImage(imageBase64)
+        listenToUserStatus()
 
         val currentUid = FirebaseAuth.getInstance().currentUser?.uid
         isOwnProfile = (uid == currentUid)
@@ -88,6 +92,26 @@ class ProfileActivity : AppCompatActivity() {
                 handleBackAction()
             }
         })
+    }
+
+    private fun listenToUserStatus() {
+        if (uid == null) return
+        
+        db.collection("users").document(uid!!).addSnapshotListener { snapshot, error ->
+            if (error != null || snapshot == null || !snapshot.exists()) return@addSnapshotListener
+            
+            val user = snapshot.toObject(User::class.java)
+            user?.let {
+                if (it.status == "Online") {
+                    binding.profileStatus.text = "Online"
+                    binding.profileStatus.setTextColor(resources.getColor(android.R.color.holo_green_dark, theme))
+                } else {
+                    val sdf = SimpleDateFormat("MMM d, HH:mm", Locale.getDefault())
+                    binding.profileStatus.text = "Last seen: ${sdf.format(java.util.Date(it.lastSeen))}"
+                    binding.profileStatus.setTextColor(resources.getColor(android.R.color.darker_gray, theme))
+                }
+            }
+        }
     }
 
     private fun handleBackAction() {

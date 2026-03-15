@@ -33,6 +33,8 @@ import com.google.firebase.firestore.ListenerRegistration
 import com.google.firebase.firestore.Query
 import java.io.ByteArrayOutputStream
 import androidx.core.graphics.scale
+import java.text.SimpleDateFormat
+import java.util.Locale
 
 class ChatActivity : AppCompatActivity() {
     private lateinit var binding: ActivityChatBinding
@@ -249,7 +251,19 @@ class ChatActivity : AppCompatActivity() {
                 userMap.putAll(newUserMap)
                 messageAdapter.updateUsers(userMap)
                 
+                // Update online status label for the "other" person
                 val myUid = auth.currentUser?.uid
+                val otherUser = newUserMap.values.find { it.uid != myUid }
+                if (otherUser != null) {
+                    binding.tvOnlineStatus.visibility = View.VISIBLE
+                    if (otherUser.status == "Online") {
+                        binding.tvOnlineStatus.text = "Online"
+                    } else {
+                        val sdf = SimpleDateFormat("MMM d, HH:mm", Locale.getDefault())
+                        binding.tvOnlineStatus.text = "Last seen: ${sdf.format(java.util.Date(otherUser.lastSeen))}"
+                    }
+                }
+
                 if (myUid != null && newUserMap.containsKey(myUid)) {
                     currentUser = newUserMap[myUid]!!
                 }

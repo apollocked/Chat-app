@@ -23,6 +23,18 @@
             app:titleTextColor="@color/white" />
 
         <TextView
+            android:id="@+id/tvOnlineStatus"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:background="@color/darkBlue"
+            android:paddingStart="72dp"
+            android:paddingBottom="4dp"
+            android:text="Offline"
+            android:textColor="@color/white"
+            android:textSize="12sp"
+            android:visibility="visible" />
+
+        <TextView
             android:id="@+id/tvTypingStatus"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
